@@ -1,0 +1,1 @@
+OFFERS: dict[str,dict]={}
