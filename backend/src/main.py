@@ -4,6 +4,8 @@ from src.offers.router import router as offers_router
 from src.process.router import router as process_router
 from src.candidates.router import router as candidates_router
 app = FastAPI(); app.include_router(offers_router, prefix="/offers")
+from src.roles.router import router as roles_router
+app.include_router(roles_router, prefix="/roles")
 
 app.add_middleware(
     CORSMiddleware,

@@ -1,0 +1,1 @@
+ROLES: dict[str, dict] = {}

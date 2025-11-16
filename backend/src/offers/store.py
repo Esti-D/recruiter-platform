@@ -1,1 +1,2 @@
-OFFERS: dict[str,dict]={}
+# backend/src/offers/store.py
+OFFERS: dict[str, dict] = {}
