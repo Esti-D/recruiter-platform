@@ -26,12 +26,42 @@ from services.roles_service import (
 )
 
 
+# ======================================================
+# CORS HELPERS
+# ======================================================
+def _cors_headers():
+    return {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With,X-Api-Key",
+    }
+
+
+def _response(status, body):
+    return {
+        "statusCode": status,
+        "headers": {
+            "Content-Type": "application/json",
+            **_cors_headers(),
+        },
+        "body": json.dumps(body, default=str),
+    }
+
+
+# ======================================================
+# MAIN HANDLER
+# ======================================================
 def lambda_handler(event, context):
     route = event.get("rawPath", "") or ""
     method = event.get("requestContext", {}).get("http", {}).get("method", "")
 
-    status = 404
-    body = {"error": "not_found"}
+    # ------ CORS PRE-FLIGHT ------
+    if method == "OPTIONS":
+        return {
+            "statusCode": 200,
+            "headers": _cors_headers(),
+            "body": "",
+        }
 
     # ---------------------------
     # CANDIDATES
@@ -42,7 +72,8 @@ def lambda_handler(event, context):
         elif method == "POST":
             status, body = create_candidate_service(event)
         else:
-            status, body = 405, {"error": "method_not_allowed"}
+            return _response(405, {"error": "method_not_allowed"})
+        return _response(status, body)
 
     elif route.startswith("/candidates/"):
         candidate_id = route.split("/")[-1]
@@ -54,7 +85,8 @@ def lambda_handler(event, context):
         elif method == "DELETE":
             status, body = delete_candidate_service(event, candidate_id)
         else:
-            status, body = 405, {"error": "method_not_allowed"}
+            return _response(405, {"error": "method_not_allowed"})
+        return _response(status, body)
 
     # ---------------------------
     # OFFERS
@@ -65,7 +97,8 @@ def lambda_handler(event, context):
         elif method == "POST":
             status, body = create_offer_service(event)
         else:
-            status, body = 405, {"error": "method_not_allowed"}
+            return _response(405, {"error": "method_not_allowed"})
+        return _response(status, body)
 
     elif route.startswith("/offers/"):
         offer_id = route.split("/")[-1]
@@ -77,7 +110,8 @@ def lambda_handler(event, context):
         elif method == "DELETE":
             status, body = delete_offer_service(event, offer_id)
         else:
-            status, body = 405, {"error": "method_not_allowed"}
+            return _response(405, {"error": "method_not_allowed"})
+        return _response(status, body)
 
     # ---------------------------
     # ROLES
@@ -88,10 +122,11 @@ def lambda_handler(event, context):
         elif method == "POST":
             status, body = create_role_service(event)
         else:
-            status, body = 405, {"error": "method_not_allowed"}
+            return _response(405, {"error": "method_not_allowed"})
+        return _response(status, body)
 
     elif route.startswith("/roles/"):
-        parts = route.split("/")  # ["", "roles", "{id}"] o ["", "roles", "{id}", "reassign"]
+        parts = route.split("/")
 
         if len(parts) == 3:
             # /roles/{role_id}
@@ -104,7 +139,8 @@ def lambda_handler(event, context):
             elif method == "DELETE":
                 status, body = delete_role_service(event, role_id)
             else:
-                status, body = 405, {"error": "method_not_allowed"}
+                return _response(405, {"error": "method_not_allowed"})
+            return _response(status, body)
 
         elif len(parts) == 4 and parts[3] == "reassign":
             # /roles/{role_id}/reassign
@@ -113,15 +149,13 @@ def lambda_handler(event, context):
             if method == "POST":
                 status, body = reassign_role_service(event, role_id)
             else:
-                status, body = 405, {"error": "method_not_allowed"}
+                return _response(405, {"error": "method_not_allowed"})
+            return _response(status, body)
 
         else:
-            status, body = 404, {"error": "not_found"}
+            return _response(404, {"error": "not_found"})
 
-    return {
-        "statusCode": status,
-        "headers": {
-            "Content-Type": "application/json"
-        },
-        "body": json.dumps(body, default=str),
-    }
+    # ---------------------------
+    # DEFAULT
+    # ---------------------------
+    return _response(404, {"error": "not_found"})

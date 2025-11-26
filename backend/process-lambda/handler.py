@@ -9,56 +9,88 @@ from services.process_service import (
 )
 
 
+# ======================================================
+# CORS HELPERS
+# ======================================================
+def _cors_headers():
+    return {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With,X-Api-Key",
+    }
+
+
+def _response(status: int, body):
+    return {
+        "statusCode": status,
+        "headers": {
+            "Content-Type": "application/json",
+            **_cors_headers(),
+        },
+        "body": json.dumps(body, default=str),
+    }
+
+
+# ======================================================
+# MAIN HANDLER
+# ======================================================
 def lambda_handler(event, context):
     route = event.get("rawPath", "") or ""
     method = event.get("requestContext", {}).get("http", {}).get("method", "")
 
-    status = 404
-    body = {"error": "not_found"}
+    # ------ CORS PRE-FLIGHT ------
+    if method == "OPTIONS":
+        return {
+            "statusCode": 200,
+            "headers": _cors_headers(),
+            "body": "",
+        }
 
     # ---------------------------
-    # /process
+    # /processes  (lista + creación)
     # ---------------------------
-    if route == "/process":
-        if method == "POST":
-            status, body = create_process_service(event)
-        elif method == "GET":
+    if route == "/processes":
+        if method == "GET":
             status, body = list_processes_service(event)
+        elif method == "POST":
+            # crear proceso (a partir de oferta + datos adicionales)
+            status, body = create_process_service(event)
         else:
-            status, body = 405, {"error": "method_not_allowed"}
+            return _response(405, {"error": "method_not_allowed"})
+        return _response(status, body)
 
     # ---------------------------
-    # /process/{pid} y /process/{pid}/candidates:generate
+    # /processes/{pid} y /processes/{pid}/candidates:generate
     # ---------------------------
-    elif route.startswith("/process/"):
-        parts = route.split("/")  # ["", "process", "{pid}", ...]
+    if route.startswith("/processes/"):
+        parts = route.split("/")  # ["", "processes", "{pid}", ...]
         if len(parts) >= 3:
             pid = parts[2]
 
-            # /process/{pid}
+            # /processes/{pid}
             if len(parts) == 3:
                 if method == "GET":
                     status, body = get_process_service(event, pid)
                 elif method == "PATCH":
                     status, body = update_process_service(event, pid)
                 else:
-                    status, body = 405, {"error": "method_not_allowed"}
+                    return _response(405, {"error": "method_not_allowed"})
+                return _response(status, body)
 
-            # /process/{pid}/candidates:generate
+            # /processes/{pid}/candidates:generate
             elif len(parts) == 4 and parts[3] == "candidates:generate":
                 if method == "POST":
                     status, body = generate_candidates_service(event, pid)
                 else:
-                    status, body = 405, {"error": "method_not_allowed"}
-            else:
-                status, body = 404, {"error": "not_found"}
-        else:
-            status, body = 404, {"error": "not_found"}
+                    return _response(405, {"error": "method_not_allowed"})
+                return _response(status, body)
 
-    return {
-        "statusCode": status,
-        "headers": {
-            "Content-Type": "application/json"
-        },
-        "body": json.dumps(body, default=str),
-    }
+            else:
+                return _response(404, {"error": "not_found"})
+
+        return _response(404, {"error": "not_found"})
+
+    # ---------------------------
+    # DEFAULT
+    # ---------------------------
+    return _response(404, {"error": "not_found"})
