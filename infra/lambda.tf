@@ -19,14 +19,13 @@ resource "aws_iam_role" "lambda_exec" {
   })
 }
 
-# Permisos básicos de ejecución (logs en CloudWatch)
+# Logs en CloudWatch
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda_exec.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
 
-# (Opcional) Política para acceder a DynamoDB (por ahora tus lambdas usan memoria,
-# pero dejamos esto listo para cuando las adaptemos a DynamoDB)
+# Acceso a DynamoDB
 resource "aws_iam_policy" "lambda_dynamodb" {
   name        = "recruiter-lambda-dynamodb"
   description = "Permisos de lectura/escritura en tablas DynamoDB de Recruiter Platform"
@@ -65,10 +64,6 @@ resource "aws_iam_role_policy_attachment" "lambda_dynamodb_attach" {
 # Empaquetar código de las Lambdas
 # ==========================================
 
-# OJO: Terraform se está ejecutando en:
-#   C:\Users\estib\VSCODE\SOLUTIONS\recruiter-platform\infra
-# Por eso el código está en ../backend/...
-
 data "archive_file" "recruiter_core_zip" {
   type        = "zip"
   source_dir  = "../backend/recruiter-core-lambda"
@@ -89,13 +84,22 @@ resource "aws_lambda_function" "recruiter_core" {
   function_name = "recruiter-core-lambda"
 
   role    = aws_iam_role.lambda_exec.arn
-  runtime = "python3.12"
+  runtime = "python3.11"
   handler = "handler.lambda_handler"
 
   filename         = data.archive_file.recruiter_core_zip.output_path
   source_code_hash = data.archive_file.recruiter_core_zip.output_base64sha256
 
   timeout = 10
+
+  environment {
+    variables = {
+      CANDIDATES_TABLE = aws_dynamodb_table.candidates.name
+      OFFERS_TABLE     = aws_dynamodb_table.offers.name
+      ROLES_TABLE      = aws_dynamodb_table.roles.name
+      PROCESSES_TABLE  = aws_dynamodb_table.processes.name
+    }
+  }
 }
 
 # ==========================================
@@ -106,11 +110,18 @@ resource "aws_lambda_function" "process" {
   function_name = "process-lambda"
 
   role    = aws_iam_role.lambda_exec.arn
-  runtime = "python3.12"
+  runtime = "python3.11"
   handler = "handler.lambda_handler"
 
   filename         = data.archive_file.process_zip.output_path
   source_code_hash = data.archive_file.process_zip.output_base64sha256
 
   timeout = 10
+
+  environment {
+    variables = {
+      PROCESSES_TABLE  = aws_dynamodb_table.processes.name
+      CANDIDATES_TABLE = aws_dynamodb_table.candidates.name
+    }
+  }
 }

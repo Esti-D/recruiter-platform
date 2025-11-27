@@ -1,4 +1,5 @@
 import json
+import logging
 
 from services.process_service import (
     create_process_service,
@@ -8,10 +9,10 @@ from services.process_service import (
     generate_candidates_service,
 )
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
-# ======================================================
-# CORS HELPERS
-# ======================================================
+
 def _cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
@@ -31,12 +32,18 @@ def _response(status: int, body):
     }
 
 
-# ======================================================
-# MAIN HANDLER
-# ======================================================
 def lambda_handler(event, context):
-    route = event.get("rawPath", "") or ""
-    method = event.get("requestContext", {}).get("http", {}).get("method", "")
+    # 👀 Log para ver qué nos llega exactamente:
+    logger.info("EVENT: %s", json.dumps(event))
+
+    # Soporta HTTP API v2 (rawPath/http.method) y REST API (path/httpMethod)
+    route = event.get("rawPath") or event.get("path") or ""
+    method = (
+        event.get("requestContext", {})
+        .get("http", {})
+        .get("method", "")
+        or event.get("httpMethod", "")
+    )
 
     # ------ CORS PRE-FLIGHT ------
     if method == "OPTIONS":
@@ -53,7 +60,6 @@ def lambda_handler(event, context):
         if method == "GET":
             status, body = list_processes_service(event)
         elif method == "POST":
-            # crear proceso (a partir de oferta + datos adicionales)
             status, body = create_process_service(event)
         else:
             return _response(405, {"error": "method_not_allowed"})

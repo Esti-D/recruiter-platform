@@ -19,73 +19,100 @@ resource "aws_apigatewayv2_api" "http_api" {
     ]
 
     allow_headers = [
-      "content-type",
-      "authorization",
-      "x-requested-with",
-      "x-api-key"
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "X-Api-Key"
     ]
-
-    expose_headers = []
-    max_age        = 3600
   }
 }
 
-# Stage por defecto, con auto_deploy
-resource "aws_apigatewayv2_stage" "default" {
+resource "aws_apigatewayv2_stage" "http_stage" {
   api_id      = aws_apigatewayv2_api.http_api.id
-  name        = "$default"
+  name        = "prod"
   auto_deploy = true
 }
 
 # ==========================================
-# Integraciones con Lambda
+# Integraciones
 # ==========================================
 
-# recruiter-core-lambda (roles, offers, candidates)
-resource "aws_apigatewayv2_integration" "core_integration" {
-  api_id                 = aws_apigatewayv2_api.http_api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.recruiter_core.invoke_arn
-  integration_method     = "POST"
+# recruiter-core-lambda (offers, candidates, roles, settings…)
+resource "aws_apigatewayv2_integration" "http_core" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.recruiter_core.arn
+  integration_method = "POST"
   payload_format_version = "2.0"
 }
 
 # process-lambda (processes)
-resource "aws_apigatewayv2_integration" "process_integration" {
-  api_id                 = aws_apigatewayv2_api.http_api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.process.invoke_arn
-  integration_method     = "POST"
+resource "aws_apigatewayv2_integration" "http_process" {
+  api_id           = aws_apigatewayv2_api.http_api.id
+  integration_type = "AWS_PROXY"
+  integration_uri  = aws_lambda_function.process.arn
+  integration_method = "POST"
   payload_format_version = "2.0"
 }
 
 # ==========================================
-# Rutas
+# Rutas para recruiter-core-lambda
 # ==========================================
 
-# Todas las rutas salvo /processes... → recruiter-core-lambda
-resource "aws_apigatewayv2_route" "core_proxy" {
+resource "aws_apigatewayv2_route" "offers_root" {
   api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "ANY /{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.core_integration.id}"
+  route_key = "ANY /offers"
+  target    = "integrations/${aws_apigatewayv2_integration.http_core.id}"
 }
 
-# /processes → process-lambda
-resource "aws_apigatewayv2_route" "process_root" {
+resource "aws_apigatewayv2_route" "offers_proxy" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "ANY /offers/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.http_core.id}"
+}
+
+resource "aws_apigatewayv2_route" "candidates_root" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "ANY /candidates"
+  target    = "integrations/${aws_apigatewayv2_integration.http_core.id}"
+}
+
+resource "aws_apigatewayv2_route" "candidates_proxy" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "ANY /candidates/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.http_core.id}"
+}
+
+resource "aws_apigatewayv2_route" "roles_root" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "ANY /roles"
+  target    = "integrations/${aws_apigatewayv2_integration.http_core.id}"
+}
+
+resource "aws_apigatewayv2_route" "roles_proxy" {
+  api_id    = aws_apigatewayv2_api.http_api.id
+  route_key = "ANY /roles/{proxy+}"
+  target    = "integrations/${aws_apigatewayv2_integration.http_core.id}"
+}
+
+# ==========================================
+# Rutas para process-lambda
+# ==========================================
+
+resource "aws_apigatewayv2_route" "processes_root" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "ANY /processes"
-  target    = "integrations/${aws_apigatewayv2_integration.process_integration.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.http_process.id}"
 }
 
-# /processes/... → process-lambda
-resource "aws_apigatewayv2_route" "process_proxy" {
+resource "aws_apigatewayv2_route" "processes_proxy" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "ANY /processes/{proxy+}"
-  target    = "integrations/${aws_apigatewayv2_integration.process_integration.id}"
+  target    = "integrations/${aws_apigatewayv2_integration.http_process.id}"
 }
 
 # ==========================================
-# Permisos para que API Gateway pueda invocar las Lambdas
+# Permisos Lambda <- API Gateway
 # ==========================================
 
 resource "aws_lambda_permission" "allow_apigw_core" {

@@ -48,11 +48,29 @@ def _response(status, body):
     }
 
 
+def _normalize_path(event) -> str:
+    """
+    Normaliza el rawPath eliminando el stage si viene incluido
+    (por ejemplo /prod/roles -> /roles).
+    """
+    raw_path = (event.get("rawPath") or "").strip() or "/"
+    ctx = event.get("requestContext", {}) or {}
+    stage = ctx.get("stage")
+
+    # Si hay stage y el path empieza por /{stage}, lo quitamos
+    if stage:
+        prefix = f"/{stage}"
+        if raw_path.startswith(prefix):
+            raw_path = raw_path[len(prefix):] or "/"
+
+    return raw_path
+
+
 # ======================================================
 # MAIN HANDLER
 # ======================================================
 def lambda_handler(event, context):
-    route = event.get("rawPath", "") or ""
+    route = _normalize_path(event)
     method = event.get("requestContext", {}).get("http", {}).get("method", "")
 
     # ------ CORS PRE-FLIGHT ------

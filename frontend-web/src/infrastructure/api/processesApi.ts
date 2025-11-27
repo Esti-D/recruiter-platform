@@ -1,10 +1,12 @@
 // src/infrastructure/api/processesApi.ts
 import { apiConfig } from "../../config/api";
 import { Process } from "../../domain/processes";
+import { Offer } from "../../domain/offers";
 
 const BASE_URL = `${apiConfig.baseUrl}/processes`;
 
 interface GenerateCandidatesResponse {
+  processId: string;
   count: number;
 }
 
@@ -27,7 +29,7 @@ export const processesApi = {
     return res.json();
   },
 
-  // (Opcional) Obtener proceso por oferta, si lo necesitas
+  // Obtener proceso por oferta (si lo usas)
   async getByOfferId(offerId: string): Promise<Process | null> {
     const url = new URL(BASE_URL);
     url.searchParams.append("offerId", offerId);
@@ -42,6 +44,31 @@ export const processesApi = {
     return res.json();
   },
 
+  // Crear proceso a partir de una oferta
+  // Tu lambda espera { offerId, recruiter, notes }
+  async createFromOffer(
+    offer: Offer,
+    recruiter: string,
+    notes = ""
+  ): Promise<Process> {
+    const payload = {
+      offerId: offer.offerId,
+      recruiter,
+      notes,
+    };
+
+    const res = await fetch(BASE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error("Error creating process from offer");
+    }
+    return res.json();
+  },
+
   // Actualizar proceso (parcial)
   async update(
     processId: string,
@@ -50,7 +77,7 @@ export const processesApi = {
     const res = await fetch(`${BASE_URL}/${processId}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(changes)
+      body: JSON.stringify(changes),
     });
 
     if (!res.ok) {
@@ -59,31 +86,34 @@ export const processesApi = {
     return res.json();
   },
 
-  // Eliminar proceso
-  async delete(processId: string): Promise<void> {
+  // Cerrar proceso
+  async close(processId: string): Promise<Process> {
     const res = await fetch(`${BASE_URL}/${processId}`, {
-      method: "DELETE"
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ status: "CLOSED" }),
     });
+
     if (!res.ok) {
-      throw new Error("Error deleting process");
+      throw new Error("Error closing process");
     }
+    return res.json();
   },
 
-  // Generar lista de candidatos para el proceso
-  // Equivalente a generate_candidates(processId, selected_roles)
+  // Generar candidatos (tu backend espera similarRoles)
   async generateCandidates(
     processId: string,
-    roles: string[]
+    similarRoles: string[]
   ): Promise<GenerateCandidatesResponse> {
-    const res = await fetch(`${BASE_URL}/${processId}/generate-candidates`, {
+    const res = await fetch(`${BASE_URL}/${processId}/candidates:generate`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ roles })
+      body: JSON.stringify({ similarRoles }),
     });
 
     if (!res.ok) {
       throw new Error("Error generating candidates for process");
     }
     return res.json();
-  }
+  },
 };

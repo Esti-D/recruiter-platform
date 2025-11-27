@@ -2,11 +2,24 @@ import json
 from datetime import datetime
 import uuid
 
-from models.store import OFFERS
+from models.store import offers_table  # ahora usamos la tabla de DynamoDB
 
 
 def _m(v):
     return v.lower() if isinstance(v, str) else v
+
+
+def _scan_all(table):
+    """Lee todos los items de la tabla (con paginación)."""
+    items: list[dict] = []
+    resp = table.scan()
+    items.extend(resp.get("Items", []))
+
+    while "LastEvaluatedKey" in resp:
+        resp = table.scan(ExclusiveStartKey=resp["LastEvaluatedKey"])
+        items.extend(resp.get("Items", []))
+
+    return items
 
 
 # GET /offers
@@ -38,7 +51,8 @@ def list_offers_service(event):
             return False
         return True
 
-    data = [v for v in OFFERS.values() if matches(v)]
+    items = _scan_all(offers_table)
+    data = [v for v in items if matches(v)]
     return 200, data
 
 
@@ -48,17 +62,28 @@ def create_offer_service(event):
     body = json.loads(body_raw)
 
     offer_id = str(uuid.uuid4())
-    offer = body | {
+    now = datetime.utcnow().isoformat()
+
+    offer = {
         "offerId": offer_id,
-        "createdAt": datetime.utcnow().isoformat(),
+        "companyName": body.get("companyName", ""),
+        "contactPerson": body.get("contactPerson", ""),
+        "role": body.get("role", ""),
+        "modality": body.get("modality", ""),
+        "location": body.get("location", ""),
+        "description": body.get("description", ""),
+        "createdAt": now,
+        "updatedAt": now,
     }
-    OFFERS[offer_id] = offer
+
+    offers_table.put_item(Item=offer)
     return 201, offer
 
 
 # GET /offers/{offer_id}
 def get_offer_service(event, offer_id: str):
-    offer = OFFERS.get(offer_id)
+    resp = offers_table.get_item(Key={"offerId": offer_id})
+    offer = resp.get("Item")
     if not offer:
         return 404, {"error": "not_found"}
     return 200, offer
@@ -66,7 +91,8 @@ def get_offer_service(event, offer_id: str):
 
 # PATCH /offers/{offer_id}
 def update_offer_service(event, offer_id: str):
-    offer = OFFERS.get(offer_id)
+    resp = offers_table.get_item(Key={"offerId": offer_id})
+    offer = resp.get("Item")
     if not offer:
         return 404, {"error": "not_found"}
 
@@ -76,6 +102,8 @@ def update_offer_service(event, offer_id: str):
     for k, v in body.items():
         offer[k] = v
     offer["updatedAt"] = datetime.utcnow().isoformat()
+
+    offers_table.put_item(Item=offer)
     return 200, offer
 
 
@@ -88,8 +116,10 @@ def delete_offer_service(event, offer_id: str):
     if role != "admin":
         return 403, {"error": "forbidden"}
 
-    if offer_id not in OFFERS:
+    # comprobamos que existe
+    resp = offers_table.get_item(Key={"offerId": offer_id})
+    if "Item" not in resp:
         return 404, {"error": "not_found"}
 
-    OFFERS.pop(offer_id)
+    offers_table.delete_item(Key={"offerId": offer_id})
     return 200, {"deleted": offer_id}

@@ -1,35 +1,13 @@
-from datetime import datetime
+import os
+import boto3
 
-CANDIDATES = {
-    "1": {
-        "candidateId": "1",
-        "name": "Ana Ejemplo",
-        "dni": "12345678A",
-        "role": "Developer",
-        "location": "Bilbao",
-        "status": "OPEN",
-        "notes": "Candidata de prueba",
-        "createdAt": datetime.utcnow().isoformat(),
-    }
-}
+# Inicializamos DynamoDB client
+dynamodb = boto3.resource("dynamodb")
 
-OFFERS = {
-    "1": {
-        "offerId": "1",
-        "companyName": "Empresa Demo",
-        "contactPerson": "Pepe",
-        "role": "Developer",
-        "modality": "Remote",
-        "location": "Bilbao",
-        "description": "Oferta de prueba",
-        "createdAt": datetime.utcnow().isoformat(),
-    }
-}
+CANDIDATES_TABLE = os.environ.get("CANDIDATES_TABLE")
+OFFERS_TABLE = os.environ.get("OFFERS_TABLE")
+ROLES_TABLE = os.environ.get("ROLES_TABLE")
 
-ROLES = {
-    "1": {
-        "roleId": "1",
-        "name": "Developer",
-        "createdAt": "2025-11-17T18:30:12"
-    }
-}
+candidates_table = dynamodb.Table(CANDIDATES_TABLE)
+offers_table = dynamodb.Table(OFFERS_TABLE)
+roles_table = dynamodb.Table(ROLES_TABLE)

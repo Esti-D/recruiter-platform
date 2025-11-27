@@ -1,7 +1,10 @@
+// src/ui/pages/OfferPage.tsx
 import { useEffect, useState } from "react";
 import { Offer } from "../../domain/offers";
 import { offersApi } from "../../infrastructure/api/offersApi";
 import { rolesApi } from "../../infrastructure/api/rolesApi";
+import { processesApi } from "../../infrastructure/api/processesApi";
+
 import { Role } from "../../domain/roles";
 import {
   Box,
@@ -95,15 +98,27 @@ export default function OfferPage() {
     setSaving(true);
     try {
       if (editingOffer) {
+        // EDITAR OFERTA EXISTENTE
         await offersApi.update(editingOffer.offerId, form);
       } else {
-        await offersApi.create(form);
+        // CREAR OFERTA NUEVA
+        const createdOffer = await offersApi.create(form);
+
+        // 🔹 CREAR AUTOMÁTICAMENTE EL PROCESO ASOCIADO
+        // De momento ponemos el recruiter fijo "Esti"
+        try {
+          await processesApi.createFromOffer(createdOffer, "Esti");
+        } catch (err) {
+          console.error("Error creating process from offer", err);
+          // Para demo: no rompemos el flujo si falla crear el proceso
+        }
       }
+
       setDialogOpen(false);
       loadOffers();
     } catch (err) {
       console.error(err);
-      window.alert("Error saving offer (simulación, sin backend aún)");
+      window.alert("Error saving offer");
     } finally {
       setSaving(false);
     }
@@ -123,10 +138,9 @@ export default function OfferPage() {
       loadOffers();
     } catch (err) {
       console.error(err);
-      window.alert("Error deleting offer (simulación, sin backend aún)");
+      window.alert("Error deleting offer");
     }
   };
-
 
   if (loading) {
     return (
@@ -150,7 +164,11 @@ export default function OfferPage() {
         </Button>
       </Stack>
 
-      <OffersTable offers={offers} onEdit={handleOpenEdit} onDelete={handleDelete} />
+      <OffersTable
+        offers={offers}
+        onEdit={handleOpenEdit}
+        onDelete={handleDelete}
+      />
 
       <Dialog open={dialogOpen} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle>
@@ -172,7 +190,6 @@ export default function OfferPage() {
               fullWidth
             />
 
-            {/* Rol de la oferta desde el catálogo de roles */}
             <TextField
               label={t("offers.fields.role")}
               value={form.role}

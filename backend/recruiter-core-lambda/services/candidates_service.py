@@ -2,11 +2,24 @@ import json
 from datetime import datetime
 import uuid
 
-from models.store import CANDIDATES
+from models.store import candidates_table  # antes: CANDIDATES dict
 
 
 def _m(v):
     return v.lower() if isinstance(v, str) else v
+
+
+def _scan_all(table):
+    """Lee todos los items de la tabla (con paginación)."""
+    items: list[dict] = []
+    resp = table.scan()
+    items.extend(resp.get("Items", []))
+
+    while "LastEvaluatedKey" in resp:
+        resp = table.scan(ExclusiveStartKey=resp["LastEvaluatedKey"])
+        items.extend(resp.get("Items", []))
+
+    return items
 
 
 # GET /candidates
@@ -18,8 +31,11 @@ def list_candidates_service(event):
     location = params.get("location")
     status = params.get("status")
 
-    def ok(c):
-        if q and not any(_m(q) in _m(str(c.get(k, ""))) for k in ("name", "dni", "role", "location", "notes")):
+    def ok(c: dict):
+        if q and not any(
+            _m(q) in _m(str(c.get(k, "")))
+            for k in ("name", "dni", "role", "location", "notes")
+        ):
             return False
         if role and _m(role) != _m(c.get("role")):
             return False
@@ -29,7 +45,8 @@ def list_candidates_service(event):
             return False
         return True
 
-    data = [v for v in CANDIDATES.values() if ok(v)]
+    items = _scan_all(candidates_table)
+    data = [v for v in items if ok(v)]
     return 200, data
 
 
@@ -39,17 +56,30 @@ def create_candidate_service(event):
     body = json.loads(body_raw)
 
     cid = str(uuid.uuid4())
-    candidate = body | {
+    now = datetime.utcnow().isoformat()
+
+    candidate = {
         "candidateId": cid,
-        "createdAt": datetime.utcnow().isoformat()
+        "name": body.get("name", ""),
+        "dni": body.get("dni", ""),
+        "role": body.get("role", ""),
+        "location": body.get("location", ""),
+        "status": body.get("status", "OPEN"),
+        "experience": body.get("experience"),
+        "strength": body.get("strength", ""),
+        "salaryRange": body.get("salaryRange", ""),
+        "notes": body.get("notes", ""),
+        "createdAt": now,
     }
-    CANDIDATES[cid] = candidate
+
+    candidates_table.put_item(Item=candidate)
     return 201, candidate
 
 
 # GET /candidates/{candidate_id}
 def get_candidate_service(event, candidate_id: str):
-    c = CANDIDATES.get(candidate_id)
+    resp = candidates_table.get_item(Key={"candidateId": candidate_id})
+    c = resp.get("Item")
     if not c:
         return 404, {"error": "not_found"}
     return 200, c
@@ -57,7 +87,8 @@ def get_candidate_service(event, candidate_id: str):
 
 # PATCH /candidates/{candidate_id}
 def update_candidate_service(event, candidate_id: str):
-    c = CANDIDATES.get(candidate_id)
+    resp = candidates_table.get_item(Key={"candidateId": candidate_id})
+    c = resp.get("Item")
     if not c:
         return 404, {"error": "not_found"}
 
@@ -67,21 +98,24 @@ def update_candidate_service(event, candidate_id: str):
     for k, v in body.items():
         c[k] = v
     c["updatedAt"] = datetime.utcnow().isoformat()
+
+    candidates_table.put_item(Item=c)
     return 200, c
 
 
 # DELETE /candidates/{candidate_id}
 def delete_candidate_service(event, candidate_id: str):
     headers = event.get("headers") or {}
-    # normalizamos a minúsculas
     headers_lower = {k.lower(): v for k, v in headers.items()}
     role = headers_lower.get("x-role", "recruiter")
 
     if role != "admin":
         return 403, {"error": "forbidden"}
 
-    if candidate_id not in CANDIDATES:
+    # comprobamos que exista
+    resp = candidates_table.get_item(Key={"candidateId": candidate_id})
+    if "Item" not in resp:
         return 404, {"error": "not_found"}
 
-    CANDIDATES.pop(candidate_id)
+    candidates_table.delete_item(Key={"candidateId": candidate_id})
     return 200, {"deleted": candidate_id}
