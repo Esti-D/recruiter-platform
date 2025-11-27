@@ -32,12 +32,27 @@ def _response(status: int, body):
     }
 
 
+def _normalize_path(event) -> str:
+    """
+    Igual que en recruiter-core-lambda:
+    elimina el stage (/prod) del rawPath si viene incluido.
+    """
+    raw_path = (event.get("rawPath") or event.get("path") or "").strip() or "/"
+    ctx = event.get("requestContext", {}) or {}
+    stage = ctx.get("stage")
+
+    if stage:
+        prefix = f"/{stage}"
+        if raw_path.startswith(prefix):
+            raw_path = raw_path[len(prefix):] or "/"
+
+    return raw_path
+
+
 def lambda_handler(event, context):
-    # 👀 Log para ver qué nos llega exactamente:
     logger.info("EVENT: %s", json.dumps(event))
 
-    # Soporta HTTP API v2 (rawPath/http.method) y REST API (path/httpMethod)
-    route = event.get("rawPath") or event.get("path") or ""
+    route = _normalize_path(event)
     method = (
         event.get("requestContext", {})
         .get("http", {})
@@ -90,9 +105,6 @@ def lambda_handler(event, context):
                 else:
                     return _response(405, {"error": "method_not_allowed"})
                 return _response(status, body)
-
-            else:
-                return _response(404, {"error": "not_found"})
 
         return _response(404, {"error": "not_found"})
 
