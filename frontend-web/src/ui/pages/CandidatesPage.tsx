@@ -26,7 +26,8 @@ const emptyForm: CandidateForm = {
   dni: "",
   role: "",
   location: "",
-  status: "",
+  // por defecto, el candidato está abierto a escuchar
+  status: "OPEN_TO_LISTEN",
   notes: "",
   experience: "",
   strength: "",
@@ -192,12 +193,23 @@ export default function CandidatesPage() {
               onChange={handleChange("location")}
               fullWidth
             />
+
+            {/* STATUS como desplegable */}
             <TextField
               label={t("candidates.fields.status")}
               value={form.status}
               onChange={handleChange("status")}
               fullWidth
-            />
+              select
+            >
+              <MenuItem value="OPEN_TO_LISTEN">
+                {t("candidates.status.OPEN_TO_LISTEN")}
+              </MenuItem>
+              <MenuItem value="NOT_INTERESTED">
+                {t("candidates.status.NOT_INTERESTED")}
+              </MenuItem>
+            </TextField>
+
             <TextField
               label={t("candidates.fields.experience")}
               value={form.experience}

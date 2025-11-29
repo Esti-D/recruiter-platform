@@ -2,11 +2,15 @@ import json
 from datetime import datetime
 import uuid
 
-from models.store import offers_table  # ahora usamos la tabla de DynamoDB
+from models.store import offers_table, processes_table  # añadimos processes_table
 
 
 def _m(v):
     return v.lower() if isinstance(v, str) else v
+
+
+def _now_iso() -> str:
+    return datetime.utcnow().isoformat()
 
 
 def _scan_all(table):
@@ -20,6 +24,29 @@ def _scan_all(table):
         items.extend(resp.get("Items", []))
 
     return items
+
+
+def _create_default_process_for_offer(offer: dict):
+    """
+    Crea un proceso OPEN asociado a la oferta recién creada.
+    Se usa internamente desde create_offer_service.
+    """
+    pid = str(uuid.uuid4())
+
+    item = {
+        "processId": pid,
+        "offerId": offer["offerId"],
+        "roleOffer": offer.get("role", ""),
+        "similarRoles": [],
+        "recruiter": "",      # si quieres más adelante podemos rellenarlo
+        "notes": "",
+        "status": "OPEN",     # estado del PROCESO
+        "createdAt": _now_iso(),
+        "closedAt": None,
+        "candidates": [],     # la lista se rellenará con candidates:generate
+    }
+
+    processes_table.put_item(Item=item)
 
 
 # GET /offers
@@ -62,21 +89,34 @@ def create_offer_service(event):
     body = json.loads(body_raw)
 
     offer_id = str(uuid.uuid4())
-    now = datetime.utcnow().isoformat()
+    now = _now_iso()
+
+    status = body.get("status") or "OPEN"
+    if status not in ("OPEN", "CLOSED"):
+        status = "OPEN"
+
+    modality = body.get("modality") or "ONSITE"
+    if modality not in ("REMOTE", "HYBRID", "ONSITE"):
+        modality = "ONSITE"
 
     offer = {
         "offerId": offer_id,
         "companyName": body.get("companyName", ""),
         "contactPerson": body.get("contactPerson", ""),
         "role": body.get("role", ""),
-        "modality": body.get("modality", ""),
+        "modality": modality,
         "location": body.get("location", ""),
         "description": body.get("description", ""),
+        "status": status,
         "createdAt": now,
         "updatedAt": now,
     }
 
     offers_table.put_item(Item=offer)
+
+    # Crear automáticamente un proceso asociado a esta oferta
+    _create_default_process_for_offer(offer)
+
     return 201, offer
 
 
@@ -101,7 +141,7 @@ def update_offer_service(event, offer_id: str):
 
     for k, v in body.items():
         offer[k] = v
-    offer["updatedAt"] = datetime.utcnow().isoformat()
+    offer["updatedAt"] = _now_iso()
 
     offers_table.put_item(Item=offer)
     return 200, offer

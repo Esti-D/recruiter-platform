@@ -59,7 +59,7 @@ export default function ProcessesTable({ processes, onOpen, onClose }: Props) {
               <TableCell>
                 <Chip
                   size="small"
-                  label={p.status}
+                  label={t(`processes.status.${p.status}`, p.status)}
                   color={
                     p.status === "OPEN"
                       ? "success"

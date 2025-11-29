@@ -9,8 +9,10 @@ export interface ProcessCandidate {
   experience?: string | null;
   strength?: string | null;
   salaryRange?: string | null;
-  state?: string | null;
-  notes?: string | null;
+  // Campos específicos del proceso (FALTAN EN TU MODELO)
+  processStatus: "INITIAL" | "IN_PROGRESS" | "REJECTED" | "APPROVED";
+  processNotes: string;
+
 }
 
 export type ProcessStatus = "OPEN" | "PAUSED" | "CLOSED";

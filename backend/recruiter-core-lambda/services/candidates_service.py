@@ -58,20 +58,23 @@ def create_candidate_service(event):
     cid = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
 
+    status = body.get("status") or "OPEN_TO_LISTEN"
+    if status not in ("OPEN_TO_LISTEN", "NOT_INTERESTED"):
+        status = "OPEN_TO_LISTEN"
+
     candidate = {
         "candidateId": cid,
         "name": body.get("name", ""),
         "dni": body.get("dni", ""),
         "role": body.get("role", ""),
         "location": body.get("location", ""),
-        "status": body.get("status", "OPEN"),
+        "status": status,
         "experience": body.get("experience"),
         "strength": body.get("strength", ""),
         "salaryRange": body.get("salaryRange", ""),
         "notes": body.get("notes", ""),
         "createdAt": now,
     }
-
     candidates_table.put_item(Item=candidate)
     return 201, candidate
 

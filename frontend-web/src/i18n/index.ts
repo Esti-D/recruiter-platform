@@ -2,137 +2,162 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 
-const resources = {
-  en: {
-    common: {
-      "app.title": "Recruiter Platform",
-      "nav.offers": "Offers",
-      "nav.candidates": "Candidates",
-      "nav.processes": "Processes",
-      "nav.roles": "Roles",
-      "nav.settings": "Settings",
+// Idiomas externos (ficheros que hemos ido creando)
+import es from "./es";
+import fr from "./fr";
+import de from "./de";
+import it from "./it";
+import eu from "./eu";
+import ca from "./ca";
+import ga from "./ga"; // gaélico (irlandés)
+import rm from "./rm"; // romanche
 
-      // ---- Candidates ----
-      "candidates.title": "Candidates",
-      "candidates.new": "New candidate",
-      "candidates.edit": "Edit candidate",
-      "candidates.create": "Create",
-      "candidates.saveChanges": "Save changes",
-      "candidates.cancel": "Cancel",
-      "candidates.confirmDelete": "Are you sure you want to delete candidate \"{{name}}\"?",
+// Inglés lo dejamos definido aquí mismo
+const en = {
+  "app.title": "Recruiter Platform",
+  "nav.offers": "Offers",
+  "nav.candidates": "Candidates",
+  "nav.processes": "Processes",
+  "nav.roles": "Roles",
+  "nav.settings": "Settings",
 
-      // Fields
-      "candidates.fields.name": "Name",
-      "candidates.fields.dni": "ID number",
-      "candidates.fields.role": "Role",
-      "candidates.fields.location": "Location",
-      "candidates.fields.status": "Status",
-      "candidates.fields.experience": "Experience",
-      "candidates.fields.strength": "Strength",
-      "candidates.fields.salaryRange": "Salary range",
-      "candidates.fields.notes": "Notes",
+  // ---- Candidates ----
+  "candidates.title": "Candidates",
+  "candidates.new": "New candidate",
+  "candidates.edit": "Edit candidate",
+  "candidates.create": "Create",
+  "candidates.saveChanges": "Save changes",
+  "candidates.cancel": "Cancel",
+  "candidates.confirmDelete":
+    'Are you sure you want to delete candidate "{{name}}"?',
 
-      // Candidates table
-      "candidates.table.actions": "Actions",
-      "candidates.empty": "No candidates found.",
-  
-      // ---- Offers page ----
-       "offers.title": "Offers",
-      "offers.new": "New offer",
-      "offers.edit": "Edit offer",
-      "offers.create": "Create",
-      "offers.saveChanges": "Save changes",
-      "offers.cancel": "Cancel",
-      "offers.empty": "No offers found.",
-      "offers.confirmDelete": "Are you sure you want to delete the offer \"{{role}}\" at \"{{company}}\"?",
+  "candidates.fields.name": "Name",
+  "candidates.fields.dni": "ID number",
+  "candidates.fields.role": "Role",
+  "candidates.fields.location": "Location",
+  "candidates.fields.status": "Status",
+  "candidates.fields.experience": "Experience",
+  "candidates.fields.strength": "Strength",
+  "candidates.fields.salaryRange": "Salary range",
+  "candidates.fields.notes": "Notes",
 
-      "offers.fields.companyName": "Company",
-      "offers.fields.contactPerson": "Contact person",
-      "offers.fields.role": "Role",
-      "offers.fields.modality": "Modality",
-      "offers.fields.location": "Location",
-      "offers.fields.description": "Description",
-      "offers.fields.createdAt": "Created at",
+  "candidates.table.actions": "Actions",
+  "candidates.empty": "No candidates found.",
 
-      "offers.table.actions": "Actions",
-      "offers.table.edit": "Edit offer",
-      "offers.table.delete": "Delete offer",
+  // Candidate status
+  "candidates.status.OPEN_TO_LISTEN": "Open to listen",
+  "candidates.status.NOT_INTERESTED": "Not interested",
 
+  // ---- Offers page ----
+  "offers.title": "Offers",
+  "offers.new": "New offer",
+  "offers.edit": "Edit offer",
+  "offers.create": "Create",
+  "offers.saveChanges": "Save changes",
+  "offers.cancel": "Cancel",
+  "offers.empty": "No offers found.",
+  "offers.confirmDelete":
+    'Are you sure you want to delete the offer "{{role}}" at "{{company}}"?',
 
-      // ---- Roles page ----
-      "roles.title": "Roles",
-      "roles.new": "New role",
-      "roles.edit": "Edit role",
-      "roles.create": "Create",
-      "roles.saveChanges": "Save changes",
-      "roles.cancel": "Cancel",
-      "roles.empty": "No roles found.",
+  "offers.fields.companyName": "Company",
+  "offers.fields.contactPerson": "Contact person",
+  "offers.fields.role": "Role",
+  "offers.fields.modality": "Modality",
+  "offers.fields.location": "Location",
+  "offers.fields.description": "Description",
+  "offers.fields.createdAt": "Created at",
 
-      // Reassign logic
-      "roles.reassignTitle": "Role in use",
-      "roles.reassignText": "The role \"{{name}}\" is currently in use. Choose a replacement role:",
-      "roles.reassign": "Reassign and delete",
+  // Modality
+  "offers.modality.REMOTE": "Remote",
+  "offers.modality.HYBRID": "Hybrid",
+  "offers.modality.ONSITE": "On site",
 
-      // Fields
-      "roles.fields.name": "Name",
-      "roles.fields.createdAt": "Created at",
-      "roles.fields.replacement": "Replacement role",
+  "offers.table.actions": "Actions",
+  "offers.table.edit": "Edit offer",
+  "offers.table.delete": "Delete offer",
 
-      // Table
-      "roles.table.actions": "Actions",
-      "roles.errorSaving": "Error saving role.",
+  // ---- Roles page ----
+  "roles.title": "Roles",
+  "roles.new": "New role",
+  "roles.edit": "Edit role",
+  "roles.create": "Create",
+  "roles.saveChanges": "Save changes",
+  "roles.cancel": "Cancel",
+  "roles.empty": "No roles found.",
 
+  "roles.reassignTitle": "Role in use",
+  "roles.reassignText":
+    'The role "{{name}}" is currently in use. Choose a replacement role:',
+  "roles.reassign": "Reassign and delete",
 
-            // ---- Processes page ----
-      "processes.title": "Processes",
-      "processes.new": "New process",
-      "processes.create": "Create",
-      "processes.cancel": "Cancel",
-      "processes.empty": "No processes found.",
-      "processes.confirmClose": "Are you sure you want to close process \"{{id}}\"?",
-      "processes.reload": "Reload processes",
+  "roles.fields.name": "Name",
+  "roles.fields.createdAt": "Created at",
+  "roles.fields.replacement": "Replacement role",
 
+  "roles.table.actions": "Actions",
+  "roles.errorSaving": "Error saving role.",
 
-      "processes.fields.processId": "Process ID",
-      "processes.fields.offer": "Offer",
-      "processes.fields.offerId": "Offer ID",
-      "processes.fields.roleOffer": "Role (offer)",
-      "processes.fields.similarRoles": "Similar roles",
-      "processes.fields.similarRolesHint": "Comma separated list of similar roles",
-      "processes.fields.recruiter": "Recruiter",
-      "processes.fields.status": "Status",
-      "processes.fields.notes": "Notes",
-      "processes.fields.createdAt": "Created at",
-      "processes.fields.closedAt": "Closed at",
-      "processes.fields.candidatesCount": "Candidates",
+  // ---- Processes page ----
+  "processes.title": "Processes",
+  "processes.new": "New process",
+  "processes.create": "Create",
+  "processes.cancel": "Cancel",
+  "processes.empty": "No processes found.",
+  "processes.confirmClose":
+    'Are you sure you want to close process "{{id}}"?',
+  "processes.reload": "Reload processes",
 
-      "processes.table.actions": "Actions",
+  "processes.fields.processId": "Process ID",
+  "processes.fields.offer": "Offer",
+  "processes.fields.offerId": "Offer ID",
+  "processes.fields.roleOffer": "Role (offer)",
+  "processes.fields.similarRoles": "Similar roles",
+  "processes.fields.similarRolesHint": "Comma separated list of similar roles",
+  "processes.fields.recruiter": "Recruiter",
+  "processes.fields.status": "Status",
+  "processes.fields.notes": "Notes",
+  "processes.fields.createdAt": "Created at",
+  "processes.fields.closedAt": "Closed at",
+  "processes.fields.candidatesCount": "Candidates",
 
-      // Processes detail
-      "processes.back": "Back to processes",
-      "processes.detailTitle": "Process {{id}}",
-      "processes.detailCandidatesTitle": "Candidates in this process",
-      "processes.saveCandidates": "Save candidates changes",
+  "processes.table.actions": "Actions",
 
-      "processes.candidates.fields.name": "Name",
-      "processes.candidates.fields.role": "Role",
-      "processes.candidates.fields.experience": "Experience",
-      "processes.candidates.fields.strength": "Strength",
-      "processes.candidates.fields.salaryRange": "Salary range",
+  "processes.back": "Back to processes",
+  "processes.detailTitle": "Process {{id}}",
+  "processes.detailCandidatesTitle": "Candidates in this process",
+  "processes.saveCandidates": "Save candidates changes",
 
-      "processes.saveProcess": "Save process",
-      "processes.generateCandidates": "Generate candidates list",
-      "processes.similarRoles.title": "Similar roles",
+  "processes.candidates.fields.name": "Name",
+  "processes.candidates.fields.role": "Role",
+  "processes.candidates.fields.experience": "Experience",
+  "processes.candidates.fields.strength": "Strength",
+  "processes.candidates.fields.salaryRange": "Salary range",
+  "processes.candidates.fields.state": "State",
+  "processes.candidates.fields.notes": "Notes",
 
-      "processes.candidates.fields.state": "State",
-      "processes.candidates.fields.notes": "Notes"
+  "processes.saveProcess": "Save process",
+  "processes.generateCandidates": "Generate candidates list",
+  "processes.similarRoles.title": "Similar roles",
 
-    }
-  }
+  // Candidate status inside process
+  "processes.candidateStatus.INITIAL": "Initial",
+  "processes.candidateStatus.IN_PROGRESS": "In progress",
+  "processes.candidateStatus.REJECTED": "Rejected",
+  "processes.candidateStatus.APPROVED": "Approved"
 };
 
 i18n.use(initReactI18next).init({
-  resources,
+  resources: {
+    en: { common: en },
+    es: { common: es },
+    fr: { common: fr },
+    de: { common: de },
+    it: { common: it },
+    eu: { common: eu },
+    ca: { common: ca },
+    ga: { common: ga },
+    rm: { common: rm }
+  },
   lng: "en",
   fallbackLng: "en",
   supportedLngs: ["en", "es", "eu", "ca", "fr", "de", "it", "ga", "rm"],

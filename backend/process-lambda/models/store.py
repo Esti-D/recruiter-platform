@@ -3,10 +3,13 @@ import boto3
 
 dynamodb = boto3.resource("dynamodb")
 
-PROCESSES_TABLE_NAME = os.environ.get("PROCESSES_TABLE", "recruiter-processes")
-OFFERS_TABLE_NAME = os.environ.get("OFFERS_TABLE", "recruiter-offers")
-CANDIDATES_TABLE_NAME = os.environ.get("CANDIDATES_TABLE", "recruiter-candidates")
+CANDIDATES_TABLE = os.environ.get("CANDIDATES_TABLE")
+OFFERS_TABLE = os.environ.get("OFFERS_TABLE")
+ROLES_TABLE = os.environ.get("ROLES_TABLE")
+PROCESSES_TABLE = os.environ.get("PROCESSES_TABLE")
 
-processes_table = dynamodb.Table(PROCESSES_TABLE_NAME)
-offers_table = dynamodb.Table(OFFERS_TABLE_NAME)
-candidates_table = dynamodb.Table(CANDIDATES_TABLE_NAME)
+candidates_table = dynamodb.Table(CANDIDATES_TABLE)
+offers_table = dynamodb.Table(OFFERS_TABLE)
+roles_table = dynamodb.Table(ROLES_TABLE)
+processes_table = dynamodb.Table(PROCESSES_TABLE)
+

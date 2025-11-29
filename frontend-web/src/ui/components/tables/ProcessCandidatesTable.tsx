@@ -6,7 +6,8 @@ import {
   TableRow,
   TableCell,
   TableBody,
-  TextField
+  TextField,
+  MenuItem
 } from "@mui/material";
 import { useTranslation } from "react-i18next";
 
@@ -46,6 +47,7 @@ export default function ProcessCandidatesTable({
           <TableCell>{t("processes.candidates.fields.notes")}</TableCell>
         </TableRow>
       </TableHead>
+
       <TableBody>
         {candidates.map((c, index) => (
           <TableRow key={c.candidateId}>
@@ -82,20 +84,36 @@ export default function ProcessCandidatesTable({
               />
             </TableCell>
 
+            {/* ⬇️ Aquí va el desplegable CORRECTO */}
             <TableCell>
               <TextField
-                value={c.state ?? ""}
-                onChange={handleChange(index, "state")}
+                select
+                value={c.processStatus ?? "INITIAL"}
+                onChange={handleChange(index, "processStatus")}
                 size="small"
                 fullWidth
                 disabled={disabled}
-              />
+              >
+                <MenuItem value="INITIAL">
+                  {t("processes.candidateStatus.INITIAL")}
+                </MenuItem>
+                <MenuItem value="IN_PROGRESS">
+                  {t("processes.candidateStatus.IN_PROGRESS")}
+                </MenuItem>
+                <MenuItem value="REJECTED">
+                  {t("processes.candidateStatus.REJECTED")}
+                </MenuItem>
+                <MenuItem value="APPROVED">
+                  {t("processes.candidateStatus.APPROVED")}
+                </MenuItem>
+              </TextField>
             </TableCell>
 
+            {/* ⬇️ Campo correcto: processNotes */}
             <TableCell>
               <TextField
-                value={c.notes ?? ""}
-                onChange={handleChange(index, "notes")}
+                value={c.processNotes ?? ""}
+                onChange={handleChange(index, "processNotes")}
                 size="small"
                 fullWidth
                 disabled={disabled}

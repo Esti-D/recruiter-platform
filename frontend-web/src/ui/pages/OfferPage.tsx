@@ -28,7 +28,8 @@ const emptyForm: OfferForm = {
   companyName: "",
   contactPerson: "",
   role: "",
-  modality: "",
+  // por defecto, modalidad presencial (encaja con el backend)
+  modality: "ONSITE",
   location: "",
   description: ""
 };
@@ -98,14 +99,13 @@ export default function OfferPage() {
     setSaving(true);
     try {
       if (editingOffer) {
-        // EDITAR OFERTA EXISTENTE
+      // EDITAR OFERTA EXISTENTE
         await offersApi.update(editingOffer.offerId, form);
       } else {
         // CREAR OFERTA NUEVA
         const createdOffer = await offersApi.create(form);
 
-        // 🔹 CREAR AUTOMÁTICAMENTE EL PROCESO ASOCIADO
-        // De momento ponemos el recruiter fijo "Esti"
+        // 🔹 CREAR AUTOMÁTICAMENTE EL PROCESO ASOCIADO (frontend)
         try {
           await processesApi.createFromOffer(createdOffer, "Esti");
         } catch (err) {
@@ -204,12 +204,25 @@ export default function OfferPage() {
               ))}
             </TextField>
 
+            {/* MODALITY como desplegable */}
             <TextField
               label={t("offers.fields.modality")}
               value={form.modality}
               onChange={handleChange("modality")}
               fullWidth
-            />
+              select
+            >
+              <MenuItem value="REMOTE">
+                {t("offers.modality.REMOTE")}
+              </MenuItem>
+              <MenuItem value="HYBRID">
+                {t("offers.modality.HYBRID")}
+              </MenuItem>
+              <MenuItem value="ONSITE">
+                {t("offers.modality.ONSITE")}
+              </MenuItem>
+            </TextField>
+
             <TextField
               label={t("offers.fields.location")}
               value={form.location}
