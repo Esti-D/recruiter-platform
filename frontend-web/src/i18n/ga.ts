@@ -135,5 +135,18 @@ export default {
   "processes.candidateStatus.INITIAL": "Tosaigh",
   "processes.candidateStatus.IN_PROGRESS": "Ar siúl",
   "processes.candidateStatus.REJECTED": "Diúltaithe",
-  "processes.candidateStatus.APPROVED": "Ceadaithe"
+  "processes.candidateStatus.APPROVED": "Ceadaithe",
+  "nav.workflow": "Workflow",
+  "workflow.title": "Sreabhadh bailíochtaithe",
+  "workflow.loading": "Míreanna ar feitheamh á lódáil…",
+  "workflow.candidates": "Iarrthóirí ar feitheamh",
+  "workflow.candidates_sub": "Cruthaithe ag iarrthóirí, ag fanacht lena n-athbhreithniú",
+  "workflow.no_candidates": "Níl aon iarrthóirí ar feitheamh.",
+  "workflow.created_by_candidate": "Cruthú iarrthóra",
+  "workflow.offers": "Tairiscintí ar feitheamh",
+  "workflow.offers_sub": "Cruthaithe ag cuideachtaí, ag fanacht lena n-athbhreithniú",
+  "workflow.no_offers": "Níl aon tairiscintí ar feitheamh.",
+  "workflow.created_by_company": "Cruthú tairisceana",
+  "workflow.validate": "Bailíochtú",
+
 };

@@ -1,66 +1,84 @@
+// src/infrastructure/api/candidatesApi.ts
 import { apiConfig } from "../../config/api";
 import { Candidate } from "../../domain/candidates";
 
 const BASE_URL = `${apiConfig.baseUrl}/candidates`;
 
+async function handleJsonOrThrow(res: Response, defaultMessage: string) {
+  if (res.ok) return res.json();
+
+  let extra = "";
+  try {
+    extra = await res.text();
+  } catch {}
+
+  throw new Error(`${defaultMessage} (HTTP ${res.status}) ${extra}`);
+}
+
+async function handleVoidOrThrow(res: Response, defaultMessage: string) {
+  if (res.ok) return;
+  let extra = "";
+  try {
+    extra = await res.text();
+  } catch {}
+  throw new Error(`${defaultMessage} (HTTP ${res.status}) ${extra}`);
+}
+
 export const candidatesApi = {
-  // Obtener lista de candidatos con filtros opcionales
   async getAll(params?: Record<string, string>): Promise<Candidate[]> {
     const url = new URL(BASE_URL);
 
     if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value) url.searchParams.append(key, value);
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) url.searchParams.append(k, v);
       });
     }
 
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Error fetching candidates");
-    return res.json();
+    const res = await fetch(url, {
+      headers: apiConfig.withAuthHeaders(),
+    });
+    return handleJsonOrThrow(res, "Error fetching candidates");
   },
 
-  // Obtener candidato por ID
   async getById(candidateId: string): Promise<Candidate> {
-    const res = await fetch(`${BASE_URL}/${candidateId}`);
-    if (!res.ok) throw new Error("Error fetching candidate");
-    return res.json();
+    const res = await fetch(`${BASE_URL}/${candidateId}`, {
+      headers: apiConfig.withAuthHeaders(),
+    });
+    return handleJsonOrThrow(res, "Error fetching candidate");
   },
 
-  // Crear candidato
   async create(
     candidate: Omit<Candidate, "candidateId" | "createdAt" | "updatedAt">
   ): Promise<Candidate> {
     const res = await fetch(BASE_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(candidate)
+      headers: apiConfig.withAuthHeaders({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify(candidate),
     });
-
-    if (!res.ok) throw new Error("Error creating candidate");
-    return res.json();
+    return handleJsonOrThrow(res, "Error creating candidate");
   },
 
-  // Actualizar candidato (PATCH parcial)
   async update(
     candidateId: string,
-    candidate: Partial<Candidate>
+    changes: Partial<Candidate>
   ): Promise<Candidate> {
     const res = await fetch(`${BASE_URL}/${candidateId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(candidate)
+      headers: apiConfig.withAuthHeaders({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify(changes),
     });
-
-    if (!res.ok) throw new Error("Error updating candidate");
-    return res.json();
+    return handleJsonOrThrow(res, "Error updating candidate");
   },
 
-  // Borrar candidato
   async delete(candidateId: string): Promise<void> {
     const res = await fetch(`${BASE_URL}/${candidateId}`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers: apiConfig.withAuthHeaders(),
     });
-
-    if (!res.ok) throw new Error("Error deleting candidate");
-  }
+    return handleVoidOrThrow(res, "Error deleting candidate");
+  },
 };

@@ -30,8 +30,20 @@ def list_candidates_service(event):
     role = params.get("role")
     location = params.get("location")
     status = params.get("status")
+    workflow = params.get("workflow")
+
+    # NUEVO: saber quién llama
+    headers = event.get("headers") or {}
+    headers_lower = {k.lower(): v for k, v in headers.items()}
+    caller_role = headers_lower.get("x-role", "recruiter")
+    caller_user_id = headers_lower.get("x-user-id")
 
     def ok(c: dict):
+        # 🔒 si es candidate, solo sus datos
+        if caller_role == "candidate" and caller_user_id:
+            if c.get("ownerId") != caller_user_id:
+                return False
+
         if q and not any(
             _m(q) in _m(str(c.get(k, "")))
             for k in ("name", "dni", "role", "location", "notes")
@@ -43,6 +55,8 @@ def list_candidates_service(event):
             return False
         if status and _m(status) != _m(c.get("status")):
             return False
+        if workflow and _m(workflow) != _m(c.get("workflow", "REVIEWED")):
+            return False
         return True
 
     items = _scan_all(candidates_table)
@@ -50,10 +64,14 @@ def list_candidates_service(event):
     return 200, data
 
 
-# POST /candidates
 def create_candidate_service(event):
     body_raw = event.get("body") or "{}"
     body = json.loads(body_raw)
+
+    headers = event.get("headers") or {}
+    headers_lower = {k.lower(): v for k, v in headers.items()}
+    creator_role = headers_lower.get("x-role", "recruiter")
+    creator_user_id = headers_lower.get("x-user-id")  # NUEVO
 
     cid = str(uuid.uuid4())
     now = datetime.utcnow().isoformat()
@@ -62,8 +80,11 @@ def create_candidate_service(event):
     if status not in ("OPEN_TO_LISTEN", "NOT_INTERESTED"):
         status = "OPEN_TO_LISTEN"
 
+    workflow = "CREATED" if creator_role in ("candidate", "company") else "REVIEWED"
+
     candidate = {
         "candidateId": cid,
+        "ownerId": creator_user_id,   # 🔒 NUEVO
         "name": body.get("name", ""),
         "dni": body.get("dni", ""),
         "role": body.get("role", ""),
@@ -73,6 +94,7 @@ def create_candidate_service(event):
         "strength": body.get("strength", ""),
         "salaryRange": body.get("salaryRange", ""),
         "notes": body.get("notes", ""),
+        "workflow": workflow,
         "createdAt": now,
     }
     candidates_table.put_item(Item=candidate)
@@ -112,9 +134,9 @@ def delete_candidate_service(event, candidate_id: str):
     headers_lower = {k.lower(): v for k, v in headers.items()}
     role = headers_lower.get("x-role", "recruiter")
 
-    if role != "admin":
+    if role not in ("admin", "recruiter"):
         return 403, {"error": "forbidden"}
-
+    
     # comprobamos que exista
     resp = candidates_table.get_item(Key={"candidateId": candidate_id})
     if "Item" not in resp:

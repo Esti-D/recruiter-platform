@@ -10,4 +10,5 @@ export interface Offer {
   description: string;
   createdAt: string;
   updatedAt?: string; // opcional
+  workflow?: "CREATED" | "REVIEWED";
 }

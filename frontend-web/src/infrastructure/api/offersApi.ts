@@ -4,25 +4,46 @@ import { Offer } from "../../domain/offers";
 
 const BASE_URL = `${apiConfig.baseUrl}/offers`;
 
+async function handleJsonOrThrow(res: Response, defaultMessage: string) {
+  if (res.ok) return res.json();
+
+  let extra = "";
+  try {
+    extra = await res.text();
+  } catch {}
+  throw new Error(`${defaultMessage} (HTTP ${res.status}) ${extra}`);
+}
+
+async function handleVoidOrThrow(res: Response, defaultMessage: string) {
+  if (res.ok) return;
+
+  let extra = "";
+  try {
+    extra = await res.text();
+  } catch {}
+  throw new Error(`${defaultMessage} (HTTP ${res.status}) ${extra}`);
+}
+
 export const offersApi = {
   async getAll(params?: Record<string, string>): Promise<Offer[]> {
     const url = new URL(BASE_URL);
-
     if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value) url.searchParams.append(key, value);
+      Object.entries(params).forEach(([k, v]) => {
+        if (v) url.searchParams.append(k, v);
       });
     }
 
-    const res = await fetch(url);
-    if (!res.ok) throw new Error("Error fetching offers");
-    return res.json();
+    const res = await fetch(url, {
+      headers: apiConfig.withAuthHeaders(),
+    });
+    return handleJsonOrThrow(res, "Error fetching offers");
   },
 
   async getById(offerId: string): Promise<Offer> {
-    const res = await fetch(`${BASE_URL}/${offerId}`);
-    if (!res.ok) throw new Error("Error fetching offer");
-    return res.json();
+    const res = await fetch(`${BASE_URL}/${offerId}`, {
+      headers: apiConfig.withAuthHeaders(),
+    });
+    return handleJsonOrThrow(res, "Error fetching offer");
   },
 
   async create(
@@ -30,34 +51,31 @@ export const offersApi = {
   ): Promise<Offer> {
     const res = await fetch(BASE_URL, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(offer)
+      headers: apiConfig.withAuthHeaders({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify(offer),
     });
-
-    if (!res.ok) throw new Error("Error creating offer");
-    return res.json();
+    return handleJsonOrThrow(res, "Error creating offer");
   },
 
-  async update(
-    offerId: string,
-    offer: Partial<Offer>
-  ): Promise<Offer> {
+  async update(offerId: string, changes: Partial<Offer>): Promise<Offer> {
     const res = await fetch(`${BASE_URL}/${offerId}`, {
       method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(offer)
+      headers: apiConfig.withAuthHeaders({
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify(changes),
     });
-
-    if (!res.ok) throw new Error("Error updating offer");
-    return res.json();
+    return handleJsonOrThrow(res, "Error updating offer");
   },
 
   async delete(offerId: string): Promise<void> {
     const res = await fetch(`${BASE_URL}/${offerId}`, {
-      method: "DELETE"
+      method: "DELETE",
+      headers: apiConfig.withAuthHeaders(),
     });
 
-    if (!res.ok) throw new Error("Error deleting offer");
-  }
+    return handleVoidOrThrow(res, "Error deleting offer");
+  },
 };
-

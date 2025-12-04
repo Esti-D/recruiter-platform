@@ -126,5 +126,19 @@ export default {
   "processes.candidateStatus.INITIAL": "Initial",
   "processes.candidateStatus.IN_PROGRESS": "In Bearbeitung",
   "processes.candidateStatus.REJECTED": "Abgelehnt",
-  "processes.candidateStatus.APPROVED": "Genehmigt"
+  "processes.candidateStatus.APPROVED": "Genehmigt",
+
+  "nav.workflow": "Workflow",
+  "workflow.title": "Validierungs-Workflow",
+  "workflow.loading": "Ausstehende Einträge werden geladen…",
+  "workflow.candidates": "Ausstehende Kandidaten",
+  "workflow.candidates_sub": "Von Kandidaten erstellt, warten auf Überprüfung",
+  "workflow.no_candidates": "Keine ausstehenden Kandidaten.",
+  "workflow.created_by_candidate": "Kandidatenerstellung",
+  "workflow.offers": "Ausstehende Angebote",
+  "workflow.offers_sub": "Von Unternehmen erstellt, warten auf Überprüfung",
+  "workflow.no_offers": "Keine ausstehenden Angebote.",
+  "workflow.created_by_company": "Angebotserstellung",
+  "workflow.validate": "Validieren"
+
 };

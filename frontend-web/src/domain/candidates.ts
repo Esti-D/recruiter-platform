@@ -13,4 +13,5 @@ export interface Candidate {
   salaryRange?: string;  // opcional
   createdAt: string;
   updatedAt?: string;    // solo cuando se edita
+  workflow?: "CREATED" | "REVIEWED";
 }

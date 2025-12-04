@@ -135,5 +135,18 @@ export default {
   "processes.candidateStatus.INITIAL": "Initial",
   "processes.candidateStatus.IN_PROGRESS": "En cours",
   "processes.candidateStatus.REJECTED": "Rejeté",
-  "processes.candidateStatus.APPROVED": "Validé"
+  "processes.candidateStatus.APPROVED": "Validé",
+  "nav.workflow": "Workflow",
+  "workflow.title": "Workflow de validation",
+  "workflow.loading": "Chargement des éléments en attente…",
+  "workflow.candidates": "Candidats en attente",
+  "workflow.candidates_sub": "Créés par des candidats, en attente de révision",
+  "workflow.no_candidates": "Aucun candidat en attente.",
+  "workflow.created_by_candidate": "Création du candidat",
+  "workflow.offers": "Offres en attente",
+  "workflow.offers_sub": "Créées par des entreprises, en attente de révision",
+  "workflow.no_offers": "Aucune offre en attente.",
+  "workflow.created_by_company": "Création de l’offre",
+  "workflow.validate": "Valider"
+
 };

@@ -135,5 +135,18 @@ export default {
   "processes.candidateStatus.INITIAL": "Tosaigh",
   "processes.candidateStatus.IN_PROGRESS": "Ar siúl",
   "processes.candidateStatus.REJECTED": "Diúltaithe",
-  "processes.candidateStatus.APPROVED": "Ceadaithe"
+  "processes.candidateStatus.APPROVED": "Ceadaithe",
+  "nav.workflow": "Workflow",
+  "workflow.title": "Workflow da validaziun",
+  "workflow.loading": "Chargiar las posiziuns en spetga…",
+  "workflow.candidates": "Candidats en spetga",
+  "workflow.candidates_sub": "Creà da candidats, en spetga da revisiun",
+  "workflow.no_candidates": "Nagins candidats en spetga.",
+  "workflow.created_by_candidate": "Creaziun dal candidat",
+  "workflow.offers": "Offertas en spetga",
+  "workflow.offers_sub": "Creà da interpresas, en spetga da revisiun",
+  "workflow.no_offers": "Naginas offertas en spetga.",
+  "workflow.created_by_company": "Creaziun da l’offerta",
+  "workflow.validate": "Validar"
+
 };

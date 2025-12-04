@@ -12,6 +12,8 @@ import {
 import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import AppRouter from "./router";
+import { roleStore } from "./config/role";
+
 
 interface NavItem {
   labelKey: string;
@@ -23,6 +25,7 @@ const navItems: NavItem[] = [
   { labelKey: "nav.candidates", path: "/candidates" },
   { labelKey: "nav.roles", path: "/roles" },
   { labelKey: "nav.processes", path: "/processes" },
+  { labelKey: "nav.workflow", path: "/workflow" },   // <--- NUEVO
   { labelKey: "nav.settings", path: "/settings" }
 ];
 
@@ -41,6 +44,14 @@ export default function App() {
     return location.pathname.startsWith(path);
   };
 
+  const role = roleStore.getRole();
+  const visibleNavItems = navItems.filter((item) => {
+    if (role === "candidate") return ["/candidates", "/settings"].includes(item.path);
+    if (role === "company") return ["/offers", "/settings"].includes(item.path);
+    return true; // recruiter y admin ven todo
+  });
+
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       <AppBar position="static" color="primary" elevation={1}>
@@ -54,7 +65,7 @@ export default function App() {
           </Typography>
 
           <Stack direction="row" spacing={1} sx={{ ml: 4 }}>
-            {navItems.map((item) => {
+            {visibleNavItems.map((item) => {
               const active = isActive(item.path);
               return (
                 <Button

@@ -17,8 +17,12 @@ def _cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With,X-Api-Key",
+        "Access-Control-Allow-Headers": (
+            "Content-Type,Authorization,X-Requested-With,"
+            "X-Api-Key,X-Role,X-User-Id"
+        ),
     }
+
 
 
 def _response(status: int, body):

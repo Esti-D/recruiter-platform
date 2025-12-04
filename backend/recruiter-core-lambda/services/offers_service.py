@@ -59,8 +59,20 @@ def list_offers_service(event):
     role = params.get("role")
     modality = params.get("modality")
     location = params.get("location")
+    workflow = params.get("workflow")
+
+    # NUEVO: quién llama
+    headers = event.get("headers") or {}
+    headers_lower = {k.lower(): v for k, v in headers.items()}
+    caller_role = headers_lower.get("x-role", "recruiter")
+    caller_user_id = headers_lower.get("x-user-id")
 
     def matches(o: dict):
+        # 🔒 si es company, solo sus ofertas
+        if caller_role == "company" and caller_user_id:
+            if o.get("ownerId") != caller_user_id:
+                return False
+
         if q and not any(
             _m(q) in _m(str(o.get(k, "")))
             for k in ("companyName", "role", "description")
@@ -76,6 +88,8 @@ def list_offers_service(event):
             return False
         if location and _m(location) != _m(o.get("location")):
             return False
+        if workflow and _m(workflow) != _m(o.get("workflow", "REVIEWED")):
+            return False
         return True
 
     items = _scan_all(offers_table)
@@ -88,6 +102,11 @@ def create_offer_service(event):
     body_raw = event.get("body") or "{}"
     body = json.loads(body_raw)
 
+    headers = event.get("headers") or {}
+    headers_lower = {k.lower(): v for k, v in headers.items()}
+    creator_role = headers_lower.get("x-role", "recruiter")
+    creator_user_id = headers_lower.get("x-user-id")  # NUEVO
+
     offer_id = str(uuid.uuid4())
     now = _now_iso()
 
@@ -99,8 +118,11 @@ def create_offer_service(event):
     if modality not in ("REMOTE", "HYBRID", "ONSITE"):
         modality = "ONSITE"
 
+    workflow = "CREATED" if creator_role in ("company", "candidate") else "REVIEWED"
+
     offer = {
         "offerId": offer_id,
+        "ownerId": creator_user_id,  
         "companyName": body.get("companyName", ""),
         "contactPerson": body.get("contactPerson", ""),
         "role": body.get("role", ""),
@@ -108,16 +130,15 @@ def create_offer_service(event):
         "location": body.get("location", ""),
         "description": body.get("description", ""),
         "status": status,
+        "workflow": workflow,
         "createdAt": now,
         "updatedAt": now,
     }
 
     offers_table.put_item(Item=offer)
-
-    # Crear automáticamente un proceso asociado a esta oferta
     _create_default_process_for_offer(offer)
-
     return 201, offer
+
 
 
 # GET /offers/{offer_id}
@@ -153,7 +174,7 @@ def delete_offer_service(event, offer_id: str):
     headers_lower = {k.lower(): v for k, v in headers.items()}
     role = headers_lower.get("x-role", "recruiter")
 
-    if role != "admin":
+    if role not in ("admin", "recruiter"):
         return 403, {"error": "forbidden"}
 
     # comprobamos que existe

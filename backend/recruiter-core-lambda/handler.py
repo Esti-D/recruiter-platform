@@ -33,8 +33,12 @@ def _cors_headers():
     return {
         "Access-Control-Allow-Origin": "*",
         "Access-Control-Allow-Methods": "GET,POST,PATCH,PUT,DELETE,OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type,Authorization,X-Requested-With,X-Api-Key",
+        "Access-Control-Allow-Headers": (
+            "Content-Type,Authorization,X-Requested-With,"
+            "X-Api-Key,X-Role,X-User-Id"
+        ),
     }
+
 
 
 def _response(status, body):
@@ -172,7 +176,18 @@ def lambda_handler(event, context):
 
         else:
             return _response(404, {"error": "not_found"})
+        
+    # ---------------------------
+    # WORKFLOW (solo recruiter)
+    # ---------------------------
+    elif route == "/workflow/candidates" and method == "GET":
+        status, body = list_candidates_service(event, workflow_only="CREATED")
+        return _response(status, body)
 
+    elif route == "/workflow/offers" and method == "GET":
+        status, body = list_offers_service(event, workflow_only="CREATED")
+        return _response(status, body)
+    
     # ---------------------------
     # DEFAULT
     # ---------------------------

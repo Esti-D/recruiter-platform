@@ -99,7 +99,7 @@ def delete_role_service(event, role_id: str):
     headers_lower = {k.lower(): v for k, v in headers.items()}
     role_header = headers_lower.get("x-role", "recruiter")
 
-    if role_header != "admin":
+    if role_header not in ("admin", "recruiter"):
         return 403, {"error": "forbidden"}
 
     # comprobar si existe el rol
@@ -129,7 +129,8 @@ def reassign_role_service(event, role_id: str):
     headers_lower = {k.lower(): v for k, v in headers.items()}
     role_header = headers_lower.get("x-role", "recruiter")
 
-    if role_header != "admin":
+    # Igual que en delete_role_service: permitimos admin y recruiter
+    if role_header not in ("admin", "recruiter"):
         return 403, {"error": "forbidden"}
 
     # comprobar rol origen
@@ -171,3 +172,4 @@ def reassign_role_service(event, role_id: str):
         "new": new_role,
         "status": "updated_and_deleted",
     }
+

@@ -106,5 +106,18 @@ export default {
   "processes.candidateStatus.INITIAL": "Inicial",
   "processes.candidateStatus.IN_PROGRESS": "En procés",
   "processes.candidateStatus.REJECTED": "Rebutjat",
-  "processes.candidateStatus.APPROVED": "Aprovat"
+  "processes.candidateStatus.APPROVED": "Aprovat",
+  "nav.workflow": "Workflow",
+  "workflow.title": "Workflow de validació",
+  "workflow.loading": "Carregant pendents…",
+  "workflow.candidates": "Candidats pendents",
+  "workflow.candidates_sub": "Creats per candidats, en espera de revisió",
+  "workflow.no_candidates": "No hi ha candidats pendents.",
+  "workflow.created_by_candidate": "Alta de candidat",
+  "workflow.offers": "Ofertes pendents",
+  "workflow.offers_sub": "Creats per empreses, en espera de revisió",
+  "workflow.no_offers": "No hi ha ofertes pendents.",
+  "workflow.created_by_company": "Alta d’oferta",
+  "workflow.validate": "Validar"
+
 };

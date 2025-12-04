@@ -127,5 +127,18 @@ export default {
   "processes.candidateStatus.INITIAL": "Hasierakoa",
   "processes.candidateStatus.IN_PROGRESS": "Martxan",
   "processes.candidateStatus.REJECTED": "Baztertua",
-  "processes.candidateStatus.APPROVED": "Onartua"
+  "processes.candidateStatus.APPROVED": "Onartua",
+  "nav.workflow": "Workflow",
+  "workflow.title": "Balidazio workflow-a",
+  "workflow.loading": "Zain daudenak kargatzen…",
+  "workflow.candidates": "Hautagai zain",
+  "workflow.candidates_sub": "Hautagaiek sortua, berrikusketaren zain",
+  "workflow.no_candidates": "Ez dago hautagai zainik.",
+  "workflow.created_by_candidate": "Hautagaiaren sarrera",
+  "workflow.offers": "Eskaintza zain",
+  "workflow.offers_sub": "Enpresek sortua, berrikusketaren zain",
+  "workflow.no_offers": "Ez dago eskaintza zainik.",
+  "workflow.created_by_company": "Eskaintzaren sarrera",
+  "workflow.validate": "Balidatu"
+
 };

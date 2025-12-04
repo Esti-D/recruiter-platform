@@ -143,7 +143,23 @@ const en = {
   "processes.candidateStatus.INITIAL": "Initial",
   "processes.candidateStatus.IN_PROGRESS": "In progress",
   "processes.candidateStatus.REJECTED": "Rejected",
-  "processes.candidateStatus.APPROVED": "Approved"
+  "processes.candidateStatus.APPROVED": "Approved",
+
+  "nav.workflow": "Workflow",
+
+  "workflow.title": "Validation workflow",
+  "workflow.loading": "Loading pending items…",
+  "workflow.candidates": "Pending candidates",
+  "workflow.candidates_sub": "Created by candidates, waiting for review",
+  "workflow.no_candidates": "No pending candidates.",
+  "workflow.created_by_candidate": "Candidate profile creation",
+  "workflow.offers": "Pending offers",
+  "workflow.offers_sub": "Created by companies, waiting for review",
+  "workflow.no_offers": "No pending offers.",
+  "workflow.created_by_company": "Offer creation",
+  "workflow.validate": "Validate",
+
+
 };
 
 i18n.use(initReactI18next).init({
