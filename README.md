@@ -167,3 +167,6 @@ See **INFRA.md** for a complete breakdown of all Terraform modules, lifecycle, I
 
 Recruiter Platform – Serverless AWS Implementation  
 Designed and implemented as an end-to-end cloud architecture project, following AWS best practices in scalability, cost efficiency, security and operational excellence.
+
+https://deepwiki.com/Esti-D/recruiter-platform/1-recruiter-platform-overview
+
