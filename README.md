@@ -82,8 +82,8 @@ repository
     ├── DATABASE.md  
     ├── FRONTEND.md  
     ├── USER_GUIDE.md  
-    └── DEPLOYMENT.md  
-
+    ├── DEPLOYMENT.md  
+    └── INFRA.md  
 ---
 
 ## 4. Environment Variables
@@ -111,11 +111,28 @@ PROCESSES_TABLE
 1. Zip Lambda code  
 2. Upload to Lambda  
 3. Publish new version  
-4. Test via API Gateway  
+4. Test endpoints through API Gateway  
+
 
 ---
 
-## 6. Documentation
+## 6. Monitoring & Observability
+
+The platform includes full monitoring powered by CloudWatch:
+
+- Metrics: Lambda, DynamoDB, API Gateway  
+- Alarms:
+  - Lambda errors and duration  
+  - API Gateway 5xx  
+  - DynamoDB throttling  
+- SNS email notifications  
+- CloudWatch dashboard: `recruiter-platform-dashboard`
+
+All monitoring resources are deployed automatically through Terraform (see **INFRA.md**).
+
+---
+
+## 7. Documentation
 
 Full technical documentation can be found in:
 - ARCHITECTURE.md  
@@ -123,12 +140,30 @@ Full technical documentation can be found in:
 - DATABASE.md  
 - FRONTEND.md  
 - USER_GUIDE.md  
-- DEPLOYMENT.md  
+- DEPLOYMENT.md
+- INFRA.md  
 
 ---
 
-## 7. Author
 
-Recruiter Platform – AWS Serverless Implementation  
-Created as part of a complete end-to-end cloud architecture project.
+## 8. Infrastructure Overview (Terraform)
 
+The Recruiter Platform is deployed as a fully serverless architecture, and all AWS resources are provisioned via Terraform.
+
+Terraform manages:
+
+- **S3 + CloudFront** → static hosting  
+- **API Gateway HTTP API** → backend entry point  
+- **Lambda functions** → compute layer  
+- **DynamoDB tables** → persistent storage  
+- **Cognito** → authentication  
+- **CloudWatch + SNS** → alarms, dashboard and notifications  
+
+See **INFRA.md** for a complete breakdown of all Terraform modules, lifecycle, IAM roles and monitoring strategy.
+
+---
+
+## 9. About
+
+Recruiter Platform – Serverless AWS Implementation  
+Designed and implemented as an end-to-end cloud architecture project, following AWS best practices in scalability, cost efficiency, security and operational excellence.
