@@ -1,0 +1,222 @@
+# INFRASTRUCTURE – Terraform-managed AWS Resources
+
+This document describes the cloud infrastructure of the Recruiter Platform and how it is defined and managed using Terraform.  
+The goal is to provide a clear view of all AWS components, their responsibilities, and how Terraform files are organised.
+
+---
+
+## 1. Overview
+
+The Recruiter Platform is implemented as a fully managed, serverless solution on AWS.  
+All infrastructure is created and updated using Terraform configuration files.
+
+Main AWS services:
+
+- **Amazon S3** – static hosting for the frontend
+- **Amazon CloudFront** (optional) – CDN and HTTPS for the frontend
+- **Amazon API Gateway (HTTP API v2)** – entry point for backend requests
+- **AWS Lambda** – backend compute for business logic
+- **Amazon DynamoDB** – NoSQL data storage
+- **Amazon Cognito** – user authentication and user pool
+- **Amazon CloudWatch + SNS** – monitoring, alarms and notifications
+
+---
+
+## 2. Terraform Structure
+
+Infrastructure as code is organised in multiple `.tf` files:
+
+- `main.tf` – provider, backend configuration and shared settings  
+- `lambda.tf` – definitions of Lambda functions and permissions  
+- `api.tf` – API Gateway HTTP API, routes, integrations and stage  
+- `dynamodb.tf` – DynamoDB tables for roles, candidates, offers and processes  
+- `cognito.tf` – Cognito User Pool, user pool client and basic configuration  
+- `cognito-users.tf` – initial users and/or groups for the platform (e.g. recruiter, admin)  
+- `s3.tf` – S3 bucket(s) for the frontend (and optional CloudFront configuration if used here)  
+- `backend.tf` or `outputs.tf` – remote state / outputs for other components  
+- `cloudwatch.tf` – CloudWatch log groups, alarms, SNS topic and CloudWatch dashboard  
+
+Terraform is responsible for:
+
+- creating and updating all AWS resources,  
+- tracking their state,  
+- and ensuring that changes are applied in a controlled, repeatable way.
+
+---
+
+## 3. Compute Layer – AWS Lambda
+
+### 3.1 Lambda Functions
+
+Two Lambda functions implement the backend:
+
+- `recruiter-core-lambda`  
+- `process-lambda`
+
+Terraform resources (in `lambda.tf`):
+
+- `aws_lambda_function.recruiter_core`  
+- `aws_lambda_function.process`  
+
+Each function includes:
+
+- code packaged and deployed from local artefacts (ZIP file or build output)
+- runtime configuration (Python),
+- environment variables (DynamoDB table names, etc.),
+- timeout and memory settings.
+
+### 3.2 IAM Roles and Permissions
+
+Each Lambda has an execution role, defined via:
+
+- `aws_iam_role` – trust policy allowing `lambda.amazonaws.com`
+- `aws_iam_role_policy` or `aws_iam_role_policy_attachment` – permissions for:
+  - reading/writing DynamoDB tables
+  - writing logs to CloudWatch Logs
+  - other required operations
+
+These IAM resources are also managed in `lambda.tf` or a dedicated IAM file.
+
+---
+
+## 4. API Layer – Amazon API Gateway (HTTP API v2)
+
+The API is defined in `api.tf` using resources such as:
+
+- `aws_apigatewayv2_api.http_api` – HTTP API definition  
+- `aws_apigatewayv2_integration` – integration with Lambda functions  
+- `aws_apigatewayv2_route` – routing from paths and methods to integrations  
+- `aws_apigatewayv2_stage.http_stage` – deployment stage (e.g. `dev`)
+
+Routing is configured so that:
+
+- routes for `/roles`, `/candidates`, `/offers`, `/workflow/...` point to `recruiter-core-lambda`
+- routes for `/processes/...` point to `process-lambda`
+
+CORS and default responses can also be configured at the stage or route level.
+
+---
+
+## 5. Authentication – Amazon Cognito
+
+Authentication and user management are defined in `cognito.tf` and `cognito-users.tf`:
+
+- `aws_cognito_user_pool` – main user directory (all platform users)
+- `aws_cognito_user_pool_client` – application client used by the frontend
+- `aws_cognito_user_group` – optional groups (recruiter, admin, candidate, company)
+- optionally `aws_cognito_user` – initial test users or seed users
+
+API Gateway uses Cognito JWT tokens to protect the backend:
+
+- the frontend obtains tokens from Cognito (login flow)
+- the frontend calls API Gateway with `Authorization: Bearer <token>`
+
+These relationships and required ARNs are managed through Terraform outputs when necessary.
+
+---
+
+## 6. Data Layer – DynamoDB
+
+DynamoDB tables are defined in `dynamodb.tf` using:
+
+- `aws_dynamodb_table.roles`
+- `aws_dynamodb_table.candidates`
+- `aws_dynamodb_table.offers`
+- `aws_dynamodb_table.processes`
+
+Each table is configured with:
+
+- a simple partition key (e.g. `roleId`, `candidateId`, `offerId`, `processId`)
+- on-demand capacity mode (PAY_PER_REQUEST), so no manual provisioning is required
+- optional point-in-time recovery if needed (not mandatory)
+
+The table names are exported as outputs or passed directly into Lambda environment variables, so the backend can read and write entities.
+
+---
+
+## 7. Frontend Hosting – Amazon S3 (and optional CloudFront)
+
+The frontend infrastructure is declared in `s3.tf`:
+
+- `aws_s3_bucket.frontend` – bucket for static assets generated by React/Vite
+- `aws_s3_bucket_website_configuration` – static website hosting configuration
+- optional bucket policy to allow public read (if serving directly from S3)
+
+If CloudFront is used, `s3.tf` or another file may contain:
+
+- `aws_cloudfront_distribution.frontend` – CDN distribution with the S3 bucket as origin
+- configuration for:
+  - default root object (`index.html`)
+  - error responses rewriting to `index.html` for SPA routing
+  - ACM certificate for HTTPS
+
+The frontend deployment itself (uploading `dist/` files) is usually done outside Terraform (for example via CI/CD), but the underlying infrastructure is defined in Terraform.
+
+---
+
+## 8. Monitoring & Alerts – CloudWatch + SNS (`cloudwatch.tf`)
+
+### 8.1 SNS
+
+- `aws_sns_topic.alerts` – topic for platform alerts  
+- `aws_sns_topic_subscription.alerts_email` – email subscription (manual confirmation required)
+
+All CloudWatch alarms send notifications to this topic.
+
+### 8.2 CloudWatch metric alarms
+
+Lambda:
+
+- `aws_cloudwatch_metric_alarm.lambda_recruiter_core_errors`  
+- `aws_cloudwatch_metric_alarm.lambda_process_errors`  
+  - metric: `Errors`  
+  - condition: `Errors > 0`
+
+- `aws_cloudwatch_metric_alarm.lambda_recruiter_core_duration`  
+- `aws_cloudwatch_metric_alarm.lambda_process_duration`  
+  - metric: `Duration`  
+  - condition: `Average > 5000 ms`
+
+API Gateway (HTTP API v2):
+
+- `aws_cloudwatch_metric_alarm.http_api_5xx`  
+  - metric: `5xx`  
+  - dimension: `ApiId` + `Stage`
+
+DynamoDB:
+
+- `aws_cloudwatch_metric_alarm.dynamodb_*_throttled`  
+  - one alarm per table  
+  - metric: `ThrottledRequests`  
+  - condition: `> 0`
+
+All alarms are in region `eu-west-1` and send notifications to the SNS topic.
+
+### 8.3 CloudWatch dashboard
+
+- `aws_cloudwatch_dashboard.main` – dashboard `recruiter-platform-dashboard`
+
+Widgets:
+
+- Lambda invocations and errors (both functions)  
+- API 4xx / 5xx metrics  
+- DynamoDB ThrottledRequests for all tables  
+
+Access:  
+CloudWatch → **Dashboards** → `recruiter-platform-dashboard`.
+
+---
+
+## 9. Terraform Lifecycle
+
+To manage the infrastructure, the typical workflow is:
+
+1. Edit `.tf` files (for example, adding a new alarm or resource).  
+2. Run `terraform plan` to review the proposed changes.  
+3. Run `terraform apply` to update AWS resources.  
+
+By keeping all AWS resources under Terraform, the architecture:
+
+- is reproducible,  
+- can be version-controlled in Git,  
+- and can be safely evolved over time as the platform grows.
