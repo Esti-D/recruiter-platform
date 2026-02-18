@@ -9,6 +9,11 @@ The platform includes:
 - Authentication through Cognito
 - Automatic creation of selection processes and workflow alerts
 
+🎥 Video walkthrough
+
+This project and the architectural decisions behind it are explained in detail in the following video:
+[https://youtu.be/KqwLdVNd91I]
+
 ---
 
 ## 1. Features Overview
